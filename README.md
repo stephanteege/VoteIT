@@ -1,54 +1,66 @@
-# VoteIt - Multimedia Microservice
+# VoteIt - Multimedia Microservice (Docker & CI/CD)
 
-Dieses Projekt ist eine Java-basierte Microservice-Anwendung zur Verwaltung von Text-, Bild- und Video-Beiträgen. Es wurde im Rahmen der **Opgave 2** entwickelt, um die Prinzipien von REST-Schnittstellen, CRUD-Operationen und CI/CD-Infrastrukturen zu demonstrieren.
-
----
-
-## 🛠️ Technologie-Stack
-* **Backend:** Java JDK 17 (com.sun.net.httpserver)
-* **Frontend:** HTML5, Bootstrap 5, Vanilla JavaScript (Fetch API)
-* **Datenhaltung:** Dateibasierte Persistenz via CSV (`posts_data.csv`)
-* **DevOps:** GitHub Actions für CI (Continuous Integration) und CD (Continuous Delivery)
+Dieses Projekt ist eine Java-basierte Microservice-Anwendung zur Verwaltung von Text-, Bild- und Video-Beiträgen. Es demonstriert die Umsetzung einer modernen DevOps-Infrastruktur inklusive Containerisierung und automatisierter Qualitätssicherung gemäß den Anforderungen von Opgave 2 und Opgave 3.
 
 ---
 
-## 🏃 Schnellstart-Anleitung
-
-### Option A: Aus dem Quellcode starten (Lokal)
-1. **Kompilieren:**
-
-   javac *.java
-
-2. **Server starten:**
-
-   java Main
-
-3. **App aufrufen:**
-Öffne `http://localhost:8089` in deinem Browser.
-
-### Option B: Nutzung des CD-Artefakts (Dritte)
-
-1. Lade die `VoteIT-Lauffaehiges-Programm.zip` aus den GitHub Actions herunter.
-2. Entpacke die Datei und öffne ein Terminal im Ordner.
-3. Starte direkt mit: `java Main`
+## Technologie-Stack
+* **Backend:** Java 17 (Amazon Corretto / OpenJDK)
+* **Frontend:** HTML5, CSS3 (Bootstrap 5), Vanilla JavaScript (Fetch API)
+* **Datenhaltung:** CSV-Persistenz (`posts_data.csv`)
+* **Infrastruktur:** Docker (Containerisierung)
+* **CI/CD:** GitHub Actions
 
 ---
 
-## ⚙️ CI/CD & Qualitätssicherung
+## Start-Möglichkeiten
 
-In diesem Projekt ist ein automatisierter Workflow implementiert, der unter `.github/workflows/pipeline.yml` eingesehen werden kann:
+### Option 1: Start mit Docker
+Dies ist der effizienteste Weg, da die gesamte Ausführungsumgebung im Image gekapselt ist.
 
-1. **Build-Check:** Bei jedem Push wird geprüft, ob der Code fehlerfrei kompiliert.
-2. **Automatisierte Tests:** Die Datei `PostServiceTest.java` führt fachliche Prüfungen (z. B. Like-Funktion) durch.
-3. **Artifact Deployment:** Nur wenn alle Tests grün sind, erstellt die Pipeline ein fertiges ZIP-Paket (Continuous Delivery).
+* **Image lokal bauen:**
+  `docker build -t voteit-app .`
+* **Container starten:**
+  `docker run -p 8089:8089 voteit-app`
+* **App aufrufen:** Navigiere im Browser zu `http://localhost:8089`.
+
+### Option 2: Start aus dem Quellcode (Lokal)
+Voraussetzung: Java JDK 17 ist lokal installiert.
+
+* **Kompilieren:** `javac *.java`
+* **Starten:** `java Main`
+
+### Option 3: Nutzung des CD-Artefakts (ZIP)
+Für Nutzer ohne installierte Java-Compiler. Lade unter dem Reiter **Actions** das Artefakt `VoteIT-Lauffaehiges-Programm` herunter, entpacke es und starte direkt mit: `java Main`.
 
 ---
 
-## 📁 Projektstruktur & Dateien
+## CI/CD & Qualitätssicherung
+Die Pipeline (`.github/workflows/pipeline.yml`) automatisiert den gesamten Software-Lebenszyklus bei jedem Push:
 
-* **`Main.java`**: Der HTTP-Server. Er verwaltet die REST-Endpunkte (`/main`, `/like`, `/update`, `/delete`).
-* **`PostService.java` & `PostServiceImplements.java**`: Trennung von Interface und Logik (Service-Layer).
-* **`Post.java`**: Das Datenmodell für die Beiträge.
-* **`PostServiceTest.java`**: Die Testklasse für die automatische Qualitätssicherung.
-* **`index.html`**: Das Frontend, das via JavaScript mit der API kommuniziert.
-* **`.gitignore`**: Ver
+1. **Build-Check:** Automatisierte Kompilierung zur Syntax-Prüfung bei jedem Push auf den Main-Branch.
+2. **Unit-Tests:** Die Klasse `PostServiceTest.java` verifiziert Kernfunktionen (z. B. Like-System, Post-Erstellung).
+3. **Continuous Delivery (Artefakt):** Bereitstellung eines ZIP-Pakets mit allen `.class`-Dateien für den schnellen Einsatz ohne Neukompilierung.
+4. **Containerisierung (Opgave 3):** Automatisierter Build eines Docker-Images als moderne, portable Ausführungsumgebung (Infrastructure-as-Code).
+
+---
+
+## Projektstruktur
+* **`Dockerfile`**: Definition der Ausführungsumgebung (Aufgabe 1, Opgave 3).
+* **`Main.java`**: HTTP-Server und Definition der REST-Endpunkte.
+* **`PostService.java` & `PostServiceImplements.java`**: Saubere Trennung von Interface und Geschäftslogik.
+* **`Post.java`**: Datenmodell für Beiträge.
+* **`PostServiceTest.java`**: Testfälle für die automatisierte Qualitätssicherung.
+* **`index.html`**: Responsive Web-Oberfläche der Anwendung.
+* **`.gitignore`**: Schließt Kompilate (`.class`), lokale Datenbanken (`.csv`) und Bilder von der Versionsverwaltung aus.
+
+---
+
+## REST-Schnittstellen (API)
+| Endpunkt | Methode | Beschreibung |
+| :--- | :--- | :--- |
+| `/main` | GET | Gibt alle Beiträge als JSON zurück. |
+| `/main` | POST | Erstellt einen neuen Multimedia-Beitrag. |
+| `/like?id=X` | POST | Inkrementiert den Like-Zähler für Beitrag X. |
+| `/update?id=X` | POST | Aktualisiert die Bildunterschrift von Beitrag X. |
+| `/delete?id=X` | POST | Löscht den Beitrag X permanent. |
