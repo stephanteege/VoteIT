@@ -5,7 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-and-deliver:
+  build-and-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,8 +21,11 @@ jobs:
     - name: Kompilieren
       run: javac *.java
 
-    # CD TEIL: Paket für die Auslieferung schnüren
+    - name: Unit-Tests ausführen
+      run: java PostServiceTest
+
     - name: Paket erstellen (Artifact)
+      if: success() # Nur wenn die Tests grün sind!
       uses: actions/upload-artifact@v4
       with:
         name: VoteIT-Lauffaehiges-Programm
@@ -30,3 +33,8 @@ jobs:
           *.class
           index.html
           logo.png
+    
+    - name: Docker Image bauen
+      run: |
+        docker build -t voteit-microservice .
+        echo "Docker Image wurde erfolgreich lokal in der Pipeline erstellt."
