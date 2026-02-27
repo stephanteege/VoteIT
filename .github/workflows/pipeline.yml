@@ -1,0 +1,23 @@
+name: VoteIT Java CI
+
+# Die Pipeline startet bei jedem Push auf den "main" Branch
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Code auschecken
+      uses: actions/checkout@v3
+
+    - name: JDK 17 installieren
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Kompilieren (Build-Test)
+      run: javac *.java
