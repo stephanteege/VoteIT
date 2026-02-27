@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .save{ background-color: rgb(250, 135, 135); cursor: pointer; border-radius: 15px; border: none; padding: 10px; color: white; font-weight: bold; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: rgb(254, 220, 219); width: 500px; padding: 20px; border-radius: 20px; position: relative; }
+        .close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 20px; }
+        .dynamic-div { padding: 15px; margin: 10px 0; background-color: white; border: 5px solid rgb(245, 185, 185); border-radius: 15px; }
+        .post-media { max-width: 100%; border-radius: 15px; display: block; margin: 10px 0; }
+        #logo-container img { width: 120px; border-radius: 15px; border: 3px solid rgb(250, 135, 135); }
+    </style>
+</head>
+<body style="background-color: rgb(255, 237, 236);">
+    <div class="container-fluid">
+        <div class="row p-3 align-items-center">
+            <div class="col-2" id="logo-container"><img src="/logo.png" alt="Logo"></div>
+            <div class="col-8 text-center"><h1 style="font-weight: bold; font-size: 300%; color: rgb(250, 135, 135);">VoteIt</h1></div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-2 d-flex flex-column gap-3 px-4">
+                <button class="btn btn-danger py-3" onclick="openModal('TEXT')">📝 Text Post</button>
+                <button class="btn btn-danger py-3" onclick="openModal('IMAGE')">🖼️ Bild Post</button>
+                <button class="btn btn-danger py-3" onclick="openModal('VIDEO')">🎥 Video Post</button>
+            </div>
+            <div class="col-8">
+                <div id="timeline-container" style="height: 75vh; overflow-y: auto; background: white; padding: 20px; border-radius: 15px; border: 5px solid rgb(245, 185, 185);">
+                    <div id="timeline"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Beitrag erstellen</h2>
+            <input class="form-control mb-2" id="caption" placeholder="Deine Nachricht..." maxlength="50">
+            <div id="fileArea" style="display:none;"><input type="file" id="mediaFile" class="form-control mb-2"></div>
+            <button class="save w-100" onclick="upload()">Veröffentlichen</button>
+        </div>
+    </div>
+
+    <script>
+        let mode = 'TEXT';
+        function openModal(m) {
+            mode = m;
+            document.getElementById("modal").style.display = "flex";
+            document.getElementById("modalTitle").innerText = m === 'TEXT' ? "Text teilen" : (m === 'IMAGE' ? "Bild hochladen" : "Video teilen");
+            document.getElementById("fileArea").style.display = m === 'TEXT' ? 'none' : 'block';
+        }
+        function closeModal() { document.getElementById("modal").style.display = "none"; }
+
+        function loadTimeline() {
+            fetch('/main').then(r => r.json()).then(data => {
+                const tl = document.getElementById("timeline");
+                tl.innerHTML = "";
+                data.reverse().forEach(post => {
+                    const div = document.createElement("div");
+                    div.className = "dynamic-div";
+                    
+                    // Videologik-Check: Endet der Pfad auf .mp4?
+                    let media = "";
+                    if (post.BildPfad && post.BildPfad !== 'null') {
+                        if (post.BildPfad.toLowerCase().endsWith(".mp4")) {
+                            media = `<video class="post-media" src="${post.BildPfad}" controls muted autoplay loop></video>`;
+                        } else {
+                            media = `<img class="post-media" src="${post.BildPfad}">`;
+                        }
+                    }
+
+                    div.innerHTML = `
+                        <h4>${post.Beschreibung}</h4>
+                        ${media}
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-outline-danger" onclick="doLike(${post.Bild_ID})">❤️ ${post.Likes || 0}</button>
+                            <button class="btn btn-sm btn-outline-primary ms-2" onclick="doEdit(${post.Bild_ID})">✏️ Bearbeiten</button>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="doDelete(${post.Bild_ID})">🪣</button>
+                            <small class="text-muted ms-3">${post.Erstelldatum}</small>
+                        </div>
+                    `;
+                    tl.appendChild(div);
+                });
+            });
+        }
+
+        function upload() {
+            const formData = new FormData();
+            formData.append("caption", document.getElementById("caption").value);
+            const file = document.getElementById("mediaFile").files[0];
+            if (mode !== 'TEXT' && file) {
+                formData.append("file", file);
+            }
+            fetch('/main', { method: 'POST', body: formData }).then(() => {
+                closeModal();
+                loadTimeline();
+            });
+        }
+
+        function doEdit(id) {
+            const newCap = prompt("Neue Beschreibung eingeben (max 50 Zeichen):");
+            if (newCap) fetch(`/update?id=${id}`, { method: 'POST', body: newCap }).then(() => loadTimeline());
+        }
+
+        function doLike(id) { fetch(`/like?id=${id}`, { method: 'POST' }).then(() => loadTimeline()); }
+        function doDelete(id) { if(confirm("Diesen Beitrag wirklich löschen?")) fetch(`/delete?id=${id}`, { method: 'POST' }).then(() => loadTimeline()); }
+
+        window.onload = loadTimeline;
+    </script>
+</body>
+</html>
