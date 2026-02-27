@@ -31,7 +31,13 @@ Voraussetzung: Java JDK 17 ist lokal installiert.
 * **Starten:** `java Main`
 
 ### Option 3: Nutzung des CD-Artefakts (ZIP)
-Für Nutzer ohne installierte Java-Compiler. Lade unter dem Reiter **Actions** das Artefakt `VoteIT-Lauffaehiges-Programm` herunter, entpacke es und starte direkt mit: `java Main`.
+Für Nutzer ohne installierte Java-Compiler oder Docker. Das fertige Programm kann direkt von GitHub bezogen werden:
+
+1. Klicke oben im Repository auf den Reiter **Actions**.
+2. Wähle den obersten (neuesten) Workflow-Lauf in der Liste aus (erkennbar am grünen Haken).
+3. Scrolle nach unten zum Bereich **Artifacts**.
+4. Klicke auf `VoteIT-Lauffaehiges-Programm`, um die Zip-Datei herunterzuladen.
+5. Entpacke die Datei und starte die Anwendung im Terminal mit: `java Main`.
 
 ---
 
