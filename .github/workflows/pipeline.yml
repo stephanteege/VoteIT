@@ -1,12 +1,11 @@
-name: VoteIT Java CI
+name: VoteIT Java CI/CD
 
-# Die Pipeline startet bei jedem Push auf den "main" Branch
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-and-deliver:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,5 +18,15 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Kompilieren (Build-Test)
+    - name: Kompilieren
       run: javac *.java
+
+    # CD TEIL: Paket für die Auslieferung schnüren
+    - name: Paket erstellen (Artifact)
+      uses: actions/upload-artifact@v4
+      with:
+        name: VoteIT-Lauffaehiges-Programm
+        path: |
+          *.class
+          index.html
+          logo.png
