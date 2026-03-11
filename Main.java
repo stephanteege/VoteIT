@@ -11,8 +11,11 @@ public class Main {
         HttpServer server = HttpServer.create(new InetSocketAddress(8089), 0);
         
         server.createContext("/main", new Handler(service));
-        
-        server.createContext("/logo.png", exchange -> {
+        server.createContext("/like", new ActionHandler(service, "LIKE"));
+        server.createContext("/delete", new ActionHandler(service, "DELETE"));
+        server.createContext("/update", new ActionHandler(service, "UPDATE"));
+
+        server.createContext("/ICON.png", exchange -> {
             File file = new File("logo.png");
             if (file.exists()) {
                 exchange.getResponseHeaders().add("Content-Type", "image/png");
@@ -27,7 +30,6 @@ public class Main {
             String path = exchange.getRequestURI().getPath().substring(8); 
             File file = new File("images", path);
             if (file.exists()) {
-                // Header-Erkennung für Videos
                 String contentType = path.toLowerCase().endsWith(".mp4") ? "video/mp4" : "image/jpeg";
                 exchange.getResponseHeaders().add("Content-Type", contentType);
                 byte[] b = Files.readAllBytes(file.toPath());
@@ -37,36 +39,14 @@ public class Main {
             exchange.close();
         });
 
-        server.createContext("/like", exchange -> {
-            int id = Integer.parseInt(exchange.getRequestURI().getQuery().split("=")[1]);
-            service.addLike(id);
-            exchange.sendResponseHeaders(200, -1);
-            exchange.close();
-        });
-
-        server.createContext("/delete", exchange -> {
-            int id = Integer.parseInt(exchange.getRequestURI().getQuery().split("=")[1]);
-            service.delete(id);
-            exchange.sendResponseHeaders(200, -1);
-            exchange.close();
-        });
-
-        server.createContext("/update", exchange -> {
-            if ("POST".equals(exchange.getRequestMethod())) {
-                String query = exchange.getRequestURI().getQuery();
-                int id = Integer.parseInt(query.split("=")[1]);
-                String newCaption = new String(exchange.getRequestBody().readAllBytes(), "UTF-8");
-                service.updateCaption(id, newCaption);
-                exchange.sendResponseHeaders(200, -1);
-            }
-            exchange.close();
-        });
-
         server.createContext("/", exchange -> {
-            byte[] b = Files.readAllBytes(new File("index.html").toPath());
-            exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
-            exchange.sendResponseHeaders(200, b.length);
-            exchange.getResponseBody().write(b);
+            File file = new File("index.html");
+            if (file.exists()) {
+                byte[] b = Files.readAllBytes(file.toPath());
+                exchange.getResponseHeaders().add("Content-Type", "text/html; charset=UTF-8");
+                exchange.sendResponseHeaders(200, b.length);
+                exchange.getResponseBody().write(b);
+            } else { exchange.sendResponseHeaders(404, -1); }
             exchange.close();
         });
 
@@ -76,26 +56,36 @@ public class Main {
 
     static class Handler implements HttpHandler {
         private PostService service;
-        Handler(PostService s) { this.service = s; }
+        public Handler(PostService service) { this.service = service; }
 
-        public void handle(HttpExchange request) throws IOException {
-            request.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
-            StringBuilder out = new StringBuilder();
-            
-            if ("GET".equals(request.getRequestMethod())) {
-                out.append("[");
-                List<Post> list = service.list();
-                for (int i = 0; i < list.size(); i++) {
-                    Post p = list.get(i);
-                    out.append("{\"Bild_ID\":"+p.getId()+",\"Beschreibung\":\""+p.getCaption()+"\",\"Likes\":"+p.getLikes()+",\"BildPfad\":\""+p.getImagePath()+"\",\"Erstelldatum\":\""+p.getDate()+"\"}");
-                    if (i < list.size() - 1) out.append(",");
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                exchange.getResponseHeaders().add("Content-Type", "application/json; charset=UTF-8");
+                List<Post> posts = service.list();
+                StringBuilder out = new StringBuilder("[");
+                for (int i = 0; i < posts.size(); i++) {
+                    Post p = posts.get(i);
+                    out.append("{")
+                       .append("\"Bild_ID\":").append(p.getId())
+                       .append(",\"Beschreibung\":\"").append(p.getCaption()).append("\"")
+                       .append(",\"Likes\":").append(p.getLikes())
+                       .append(",\"BildPfad\":\"").append(p.getImagePath()).append("\"")
+                       .append(",\"Erstelldatum\":\"").append(p.getDate()).append("\"")
+                       .append("}");
+                    if (i < posts.size() - 1) out.append(",");
                 }
                 out.append("]");
-            } else if ("POST".equals(request.getRequestMethod())) {
-                byte[] bytes = request.getRequestBody().readAllBytes();
+                byte[] resp = out.toString().getBytes("UTF-8");
+                exchange.sendResponseHeaders(200, resp.length);
+                exchange.getResponseBody().write(resp);
+            } else if ("POST".equals(exchange.getRequestMethod())) {
+                byte[] bytes = exchange.getRequestBody().readAllBytes();
                 String body = new String(bytes, "ISO-8859-1");
-                
-                String caption = "Kein Text";
+                String caption = "Neuer Beitrag";
+                InputStream is = null;
+                String ct = null;
+
                 int cIdx = body.indexOf("name=\"caption\"");
                 if (cIdx != -1) {
                     int s = body.indexOf("\r\n\r\n", cIdx) + 4;
@@ -103,29 +93,45 @@ public class Main {
                     caption = new String(body.substring(s, e).getBytes("ISO-8859-1"), "UTF-8");
                 }
 
-                InputStream is = null;
-                String ct = null;
                 int fIdx = body.indexOf("name=\"file\"");
                 if (fIdx != -1 && body.contains("filename=\"")) {
                     int ctS = body.indexOf("Content-Type: ", fIdx) + 14;
                     int ctE = body.indexOf("\r\n", ctS);
                     ct = body.substring(ctS, ctE).trim();
-                    
                     int dS = body.indexOf("\r\n\r\n", ctE) + 4;
-                    int dE = body.lastIndexOf("\r\n---");
+                    int dE = body.lastIndexOf("\r\n--");
                     if (dE > dS) {
-                        byte[] mediaData = new byte[dE - dS];
-                        System.arraycopy(bytes, dS, mediaData, 0, mediaData.length);
-                        is = new ByteArrayInputStream(mediaData);
+                        byte[] data = new byte[dE - dS];
+                        System.arraycopy(bytes, dS, data, 0, data.length);
+                        is = new ByteArrayInputStream(data);
                     }
                 }
                 service.create(caption, LocalDate.now(), is, ct);
-                out.append("{\"status\":\"ok\"}");
+                exchange.sendResponseHeaders(200, 0);
             }
-            byte[] resp = out.toString().getBytes("UTF-8");
-            request.sendResponseHeaders(200, resp.length);
-            request.getResponseBody().write(resp);
-            request.close();
+            exchange.close();
+        }
+    }
+
+    static class ActionHandler implements HttpHandler {
+        private PostService service;
+        private String action;
+        public ActionHandler(PostService s, String a) { this.service = s; this.action = a; }
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String query = exchange.getRequestURI().getQuery();
+            if (query != null && query.contains("id=")) {
+                int id = Integer.parseInt(query.split("=")[1]);
+                if ("LIKE".equals(action)) service.addLike(id);
+                if ("DELETE".equals(action)) service.delete(id);
+                if ("UPDATE".equals(action)) {
+                    BufferedReader r = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), "UTF-8"));
+                    String newCap = r.readLine();
+                    if (newCap != null) service.updateCaption(id, newCap);
+                }
+            }
+            exchange.sendResponseHeaders(200, 0);
+            exchange.close();
         }
     }
 }
