@@ -557,10 +557,17 @@
 
         function upload() {
             const formData = new FormData();
-            formData.append("caption", document.getElementById("caption").value);
-            const file = document.getElementById("mediaFile").files[0];
-            if (mode !== 'TEXT' && file) formData.append("file", file);
+            const capElem = document.getElementById("caption");
+            const fileElem = document.getElementById("mediaFile");
+            
+            formData.append("caption", capElem.value);
+            const file = fileElem.files[0];
+            if (file) formData.append("file", file);
+            
             fetch('/main', { method: 'POST', body: formData }).then(() => {
+                // HIER IST DER FIX: Felder leeren nach Upload
+                capElem.value = "";
+                fileElem.value = "";
                 closeModal();
                 loadTimeline();
             });
