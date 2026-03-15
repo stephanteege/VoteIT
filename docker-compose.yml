@@ -5,8 +5,7 @@ services:
     ports:
       - "8089:8089"
     volumes:
-      - ./posts_data.csv:/app/posts_data.csv
-      - ./images:/app/images
+      - ./:/app
     depends_on:
       - user-service
 
