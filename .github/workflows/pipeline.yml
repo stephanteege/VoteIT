@@ -26,11 +26,11 @@ jobs:
       working-directory: ./voteit-service
       run: javac *.java
 
-    - name: Unit-Tests ausführen (Die Extra-Punkte!)
+    - name: Automatisierte Unit-Tests ausführen
       working-directory: ./voteit-service
       run: java PostServiceTest
 
-    - name: ZIP-Ordner (Artefakt) vorbereiten
+    - name: Artefakt vorbereiten
       run: |
         mkdir release
         cp -r user-service release/
