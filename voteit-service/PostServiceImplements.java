@@ -8,7 +8,23 @@ public class PostServiceImplements implements PostService {
     private List<Post> posts = new ArrayList<>();
     private final String CSV_FILE = "posts_data.csv";
 
-    public PostServiceImplements() { loadFromCSV(); }
+    public PostServiceImplements() { 
+        // Selbstheilung: Prüfen ob Datei existiert, bevor geladen wird
+        ensureCSVExists();
+        loadFromCSV(); 
+    }
+
+    private void ensureCSVExists() {
+        File f = new File(CSV_FILE);
+        if (!f.exists()) {
+            try {
+                f.createNewFile();
+                System.out.println("ℹ️ posts_data.csv wurde automatisch erstellt.");
+            } catch (IOException e) {
+                System.err.println("❌ Konnte posts_data.csv nicht erstellen: " + e.getMessage());
+            }
+        }
+    }
 
     @Override
     public List<Post> list() { return posts; }
@@ -40,7 +56,7 @@ public class PostServiceImplements implements PostService {
         p.setCaption(caption);
         p.setDate(date != null ? date : LocalDate.now());
         p.setLikes(0);
-        p.setAuthor(author); // Speichert den Namen aus dem Cookie
+        p.setAuthor(author); 
         
         if (pictureStream != null && contentType != null) {
             try {
@@ -74,7 +90,7 @@ public class PostServiceImplements implements PostService {
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(";");
                 Post p = new Post();
-                if (parts.length >= 6) { // Mit Ersteller
+                if (parts.length >= 6) { 
                     p.setId(Integer.parseInt(parts[0]));
                     p.setCaption(parts[1]);
                     p.setDate(LocalDate.parse(parts[2]));
@@ -82,7 +98,7 @@ public class PostServiceImplements implements PostService {
                     p.setLikes(Integer.parseInt(parts[4]));
                     p.setAuthor(parts[5]);
                     posts.add(p);
-                } else if (parts.length == 5) { // Alte Daten ohne Ersteller
+                } else if (parts.length == 5) { 
                     p.setId(Integer.parseInt(parts[0]));
                     p.setCaption(parts[1]);
                     p.setDate(LocalDate.parse(parts[2]));
