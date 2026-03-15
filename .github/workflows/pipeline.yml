@@ -1,0 +1,41 @@
+name: VoteIT Java CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Code auschecken
+      uses: actions/checkout@v4
+
+    - name: Java JDK 17 einrichten
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'corretto'
+
+    - name: User-Service kompilieren
+      working-directory: ./user-service
+      run: javac UserService.java
+
+    - name: VoteIT-Service kompilieren
+      working-directory: ./voteit-service
+      run: javac *.java
+
+    - name: ZIP-Ordner (Artefakt) vorbereiten
+      run: |
+        mkdir release
+        cp -r user-service release/
+        cp -r voteit-service release/
+        cp docker-compose.yml release/
+        cp README.md release/
+
+    - name: Artefakt hochladen
+      uses: actions/upload-artifact@v4
+      with:
+        name: VoteIT-Lauffaehiges-Programm
+        path: release/
