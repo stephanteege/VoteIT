@@ -1,0 +1,12 @@
+# Kompilierte Java-Klassen
+*.class
+
+# Lokale Testdaten und Uploads
+posts_data.csv
+images/
+
+# MacOS Systemdateien
+.DS_Store
+
+# Editor-Konfigurationen
+.vscode/

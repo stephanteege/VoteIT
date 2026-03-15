@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  voteit-app:
+    build: ./voteit-service
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./posts_data.csv:/app/posts_data.csv
+      - ./images:/app/images
+    depends_on:
+      - user-service
+
+  user-service:
+    build: ./user-service
+    ports:
+      - "8090:8090"

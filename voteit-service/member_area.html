@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoteIt – Member Area</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,600&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="bg-blob bg-blob-1"></div>
+    <div class="bg-blob bg-blob-2"></div>
+    <div class="bg-blob bg-blob-3"></div>
+    <div class="deco deco-1">🌊</div>
+    <div class="deco deco-2">🍋</div>
+    <div class="deco deco-3">🌸</div>
+
+    <div class="barcode-deco">
+        <span style="width:14px"></span><span style="width:8px"></span>
+        <span style="width:16px"></span><span style="width:10px"></span>
+        <span style="width:18px"></span><span style="width:8px"></span>
+        <span style="width:14px"></span><span style="width:12px"></span>
+    </div>
+
+    <header>
+        <div class="header-inner">
+            <div class="logo-wrap">
+                <img src="/ICON.png" alt="VoteIt Logo">
+                <div class="brand-name">VoteIt - Members</div>
+            </div>
+            <div class="event-badge">
+                <div class="event-title">Bachelor in Garden</div>
+                <div class="event-details">28. August 2026</div>
+                <button class="modal-submit" style="padding: 8px 15px; width: auto; font-size: 0.9rem;" onclick="window.location.href='http://localhost:8090/logout'">Abmelden</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="divider"><span class="divider-icon">✦</span></div>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="sidebar-label">Beitrag erstellen</div>
+            <button class="post-btn" onclick="openModal('TEXT')"><i class="bi bi-pencil-square btn-icon"></i> Text Post</button>
+            <button class="post-btn" onclick="openModal('IMAGE')"><i class="bi bi-image btn-icon"></i> Bild Post</button>
+            <button class="post-btn" onclick="openModal('VIDEO')"><i class="bi bi-camera-video btn-icon"></i> Video Post</button>
+        </aside>
+
+        <main>
+            <div class="timeline-wrap">
+                <div id="timeline">
+                    <div class="timeline-empty">Lade Beiträge... 🥂</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-box">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <div class="modal-title" id="modalTitle">Beitrag teilen</div>
+            <input class="modal-input" id="caption" placeholder="Deine Nachricht …" maxlength="50">
+            <div id="fileArea" style="display:none;">
+                <input type="file" id="mediaFile" class="modal-input">
+            </div>
+            <button class="modal-submit" onclick="upload()">Veröffentlichen</button>
+        </div>
+    </div>
+
+    <script>
+        function openModal(m) {
+            document.getElementById("modal").classList.add("open");
+            document.getElementById("fileArea").style.display = m === 'TEXT' ? 'none' : 'block';
+        }
+
+        function closeModal() { document.getElementById("modal").classList.remove("open"); }
+
+        function loadTimeline() {
+            fetch('/main').then(r => r.json()).then(data => {
+                const tl = document.getElementById("timeline");
+                tl.innerHTML = "";
+                if (!data.length) { tl.innerHTML = '<div class="timeline-empty">Noch keine Beiträge – sei der Erste! 🥂</div>'; return; }
+                
+                data.reverse().forEach(post => {
+                    const div = document.createElement("div");
+                    div.className = "post-card";
+                    let media = "";
+                    if (post.BildPfad && post.BildPfad !== 'null') {
+                        if (post.BildPfad.endsWith(".mp4")) media = `<video class="post-media" src="${post.BildPfad}" controls></video>`;
+                        else media = `<img class="post-media" src="${post.BildPfad}">`;
+                    }
+                    div.innerHTML = `
+                        <h4>${post.Beschreibung}</h4>
+                        ${media}
+                        <div class="post-actions" style="margin-top: 15px;">
+                            <button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem;" onclick="doLike(${post.Bild_ID})">♡ ${post.Likes || 0}</button>
+                            <button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem; background: #e0607a;" onclick="doDelete(${post.Bild_ID})">Löschen</button>
+                            <span style="float: right; font-style: italic; color: #7a9fd4; margin-top: 5px;">von ${post.Ersteller || 'Anonym'}</span>
+                        </div>
+                    `;
+                    tl.appendChild(div);
+                });
+            });
+        }
+
+        function upload() {
+            const formData = new FormData();
+            formData.append("caption", document.getElementById("caption").value);
+            if (document.getElementById("mediaFile").files[0]) formData.append("file", document.getElementById("mediaFile").files[0]);
+            
+            fetch('/main', { method: 'POST', body: formData }).then(() => {
+                document.getElementById("caption").value = "";
+                document.getElementById("mediaFile").value = "";
+                closeModal();
+                loadTimeline();
+            });
+        }
+
+        function doLike(id) { fetch(`/like?id=${id}`, { method: 'POST' }).then(loadTimeline); }
+        function doDelete(id) { if(confirm("Löschen?")) fetch(`/delete?id=${id}`, { method: 'POST' }).then(loadTimeline); }
+
+        window.onload = loadTimeline;
+    </script>
+</body>
+</html>
