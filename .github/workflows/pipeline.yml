@@ -26,6 +26,10 @@ jobs:
       working-directory: ./voteit-service
       run: javac *.java
 
+    - name: Unit-Tests ausführen (Die Extra-Punkte!)
+      working-directory: ./voteit-service
+      run: java PostServiceTest
+
     - name: ZIP-Ordner (Artefakt) vorbereiten
       run: |
         mkdir release
