@@ -1,15 +1,22 @@
-version: '3.8'
 services:
   voteit-app:
     build: ./voteit-service
+    container_name: voteit-app-1
     ports:
       - "8089:8089"
     volumes:
-      - ./:/app
+      - ./voteit-service:/app
+    working_dir: /app
+    command: java Main
     depends_on:
       - user-service
 
   user-service:
     build: ./user-service
+    container_name: user-service-1
     ports:
       - "8090:8090"
+    volumes:
+      - ./user-service:/app
+    working_dir: /app
+    command: java UserService
