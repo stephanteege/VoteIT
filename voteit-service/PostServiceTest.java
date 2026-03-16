@@ -8,7 +8,6 @@ public class PostServiceTest {
         PostService service = new PostServiceImplements();
         
         // Test 1: Erstellen eines Beitrags
-        // Wir übergeben null für Stream und ContentType, da dies ein Text-Test ist
         Post p = service.create("CI-Test Nachricht", LocalDate.now(), null, null, "Test-User");        
         if (p != null && "CI-Test Nachricht".equals(p.getCaption())) {
             System.out.println("✅ Test Erstellen: ERFOLGREICH");
@@ -19,9 +18,12 @@ public class PostServiceTest {
 
         // Test 2: Like-Funktion (Zustandsprüfung)
         int likesVorher = p.getLikes();
-        service.addLike(p.getId());
+        service.addLike(p.getId(), "TestUser");
+        
+        service.addLike(p.getId(), "TestUser"); 
+
         if (p.getLikes() == likesVorher + 1) {
-            System.out.println("✅ Test Like-System: ERFOLGREICH");
+            System.out.println("✅ Test Like-System: ERFOLGREICH (Einfach-Check)");
         } else {
             System.out.println("❌ Test Like-System: FEHLGESCHLAGEN");
             System.exit(1);

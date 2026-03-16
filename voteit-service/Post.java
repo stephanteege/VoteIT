@@ -1,12 +1,15 @@
 import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Post {
     private int id;
     private String caption;
     private LocalDate date;
     private String imagePath;
-    private int likes;
     private String author;
+
+    private Set<String> likedBy = new HashSet<>();
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -16,8 +19,11 @@ public class Post {
     public void setDate(LocalDate date) { this.date = date; }
     public String getImagePath() { return imagePath; }
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
-    public int getLikes() { return likes; }
-    public void setLikes(int likes) { this.likes = likes; }
     public String getAuthor() { return author; }
     public void setAuthor(String author) { this.author = author; }
+
+    public Set<String> getLikedBy() { return likedBy; }
+    public void setLikedBy(Set<String> likedBy) { this.likedBy = likedBy; }
+
+    public int getLikes() { return likedBy.size(); }
 }

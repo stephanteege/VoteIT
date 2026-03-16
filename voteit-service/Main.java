@@ -15,13 +15,11 @@ public class Main {
         server.createContext("/delete", new ActionHandler(service, "DELETE"));
         server.createContext("/update", new ActionHandler(service, "UPDATE"));
 
-        // Statische Dateien
         serveFile(server, "/style.css", "style.css", "text/css");
         serveFile(server, "/index.html", "index.html", "text/html");
         serveFile(server, "/member_area.html", "member_area.html", "text/html"); // FEHLTE!
         serveFile(server, "/ICON.png", "logo.png", "image/png");
 
-        // Bilder und Videos ausliefern
         server.createContext("/images/", exchange -> {
             String path = exchange.getRequestURI().getPath().substring(8); 
             File file = new File("images", path);
@@ -35,7 +33,6 @@ public class Main {
             exchange.close();
         });
 
-        // Startseite auf index.html routen
         server.createContext("/", exchange -> {
             File file = new File("index.html");
             if (file.exists()) {
@@ -91,7 +88,6 @@ public class Main {
                 exchange.sendResponseHeaders(200, resp.length);
                 exchange.getResponseBody().write(resp);
             } else if ("POST".equals(exchange.getRequestMethod())) {
-                // Liest den eingeloggten User aus dem Cookie
                 String cookie = exchange.getRequestHeaders().getFirst("Cookie");
                 String user = (cookie != null && cookie.contains("user=")) ? cookie.split("user=")[1].split(";")[0] : "Anonym";
                 
@@ -121,7 +117,7 @@ public class Main {
                         is = new ByteArrayInputStream(data);
                     }
                 }
-                // Gibt den User an den Service weiter
+                
                 service.create(caption, LocalDate.now(), is, ct, user);
                 exchange.sendResponseHeaders(200, 0);
             }
@@ -138,7 +134,15 @@ public class Main {
             String query = exchange.getRequestURI().getQuery();
             if (query != null && query.contains("id=")) {
                 int id = Integer.parseInt(query.split("=")[1]);
-                if ("LIKE".equals(action)) service.addLike(id);
+                
+                // NEU: Den Usernamen aus dem Cookie holen, genau wie beim Posten!
+                String cookie = exchange.getRequestHeaders().getFirst("Cookie");
+                String currentUser = (cookie != null && cookie.contains("user=")) ? cookie.split("user=")[1].split(";")[0] : "Anonym";
+
+                if ("LIKE".equals(action)) {
+                    // NEU: Jetzt geben wir den Namen an die Like-Methode weiter
+                    service.addLike(id, currentUser); 
+                }
                 if ("DELETE".equals(action)) service.delete(id);
                 if ("UPDATE".equals(action)) {
                     BufferedReader r = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), "UTF-8"));

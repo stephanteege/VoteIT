@@ -41,14 +41,13 @@ Der Service unterstützt die Verarbeitung von Multimedia-Daten via `multipart/fo
 
 ## Lokales Setup und Ausführung
 
-Die Anwendung kann auf drei Arten gestartet werden, je nach gewünschtem Automatisierungsgrad.
+Die Anwendung kann auf drei Arten gestartet werden, je nach gewünschtem Automatisierungsgrad und ist anschöießend erreichbar unter: `http://localhost:8089`
 
 ### Option 1: Start via Docker Compose (Empfohlen)
 Die Nutzung von Docker Compose konfiguriert das Netzwerk-Routing sowie die persistenten Volumes automatisch. Voraussetzung ist eine lokale Installation von Docker.
 
 1. Das Repository klonen und ein Terminal im Stammverzeichnis öffnen.
 2. Build und Start der Container: `docker-compose up --build`
-3. Die Anwendung ist erreichbar unter: `http://localhost:8089`
 
 ### Option 2: Manueller Start via Java (Ohne Docker)
 Voraussetzung ist ein installiertes Java JDK 17. Da die Architektur aus zwei getrennten Services besteht, müssen diese in zwei separaten Terminals gestartet werden.

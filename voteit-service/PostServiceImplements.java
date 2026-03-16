@@ -2,6 +2,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 public class PostServiceImplements implements PostService {
@@ -9,7 +11,6 @@ public class PostServiceImplements implements PostService {
     private final String CSV_FILE = "posts_data.csv";
 
     public PostServiceImplements() { 
-        // Selbstheilung: Prüfen ob Datei existiert, bevor geladen wird
         ensureCSVExists();
         loadFromCSV(); 
     }
@@ -17,30 +18,25 @@ public class PostServiceImplements implements PostService {
     private void ensureCSVExists() {
         File f = new File(CSV_FILE);
         if (!f.exists()) {
-            try {
-                f.createNewFile();
-                System.out.println("ℹ️ posts_data.csv wurde automatisch erstellt.");
-            } catch (IOException e) {
-                System.err.println("❌ Konnte posts_data.csv nicht erstellen: " + e.getMessage());
-            }
+            try { f.createNewFile(); } catch (IOException e) { e.printStackTrace(); }
         }
     }
 
     @Override
-    public List<Post> list() { return posts; }
-
-    @Override
-    public Post get(int id) {
-        return posts.stream().filter(p -> p.getId() == id).findFirst().orElse(null);
-    }
-
-    @Override
-    public Post addLike(int id) {
+    public Post addLike(int id, String userName) {
         Post p = get(id);
-        if (p != null) { p.setLikes(p.getLikes() + 1); saveToCSV(); }
+        if (p != null && userName != null && !userName.isEmpty()) {
+            // Set fügt Namen nur hinzu, wenn er noch nicht existiert
+            p.getLikedBy().add(userName);
+            saveToCSV();
+        }
         return p;
     }
 
+    @Override
+    public List<Post> list() { return posts; }
+    @Override
+    public Post get(int id) { return posts.stream().filter(p -> p.getId() == id).findFirst().orElse(null); }
     @Override
     public Post delete(int id) {
         Post p = get(id);
@@ -55,8 +51,8 @@ public class PostServiceImplements implements PostService {
         p.setId(nextId);
         p.setCaption(caption);
         p.setDate(date != null ? date : LocalDate.now());
-        p.setLikes(0);
-        p.setAuthor(author); 
+        p.setAuthor(author);
+        p.setImagePath("null");
         
         if (pictureStream != null && contentType != null) {
             try {
@@ -67,17 +63,10 @@ public class PostServiceImplements implements PostService {
                 Files.copy(pictureStream, new File(dir, fileName).toPath());
                 p.setImagePath("/images/" + fileName);
             } catch (IOException e) { p.setImagePath("null"); }
-        } else { p.setImagePath("null"); }
+        }
 
         posts.add(p);
         saveToCSV();
-        return p;
-    }
-
-    @Override
-    public Post updateCaption(int id, String newCaption) {
-        Post p = get(id);
-        if (p != null) { p.setCaption(newCaption); saveToCSV(); }
         return p;
     }
 
@@ -89,22 +78,19 @@ public class PostServiceImplements implements PostService {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(";");
-                Post p = new Post();
-                if (parts.length >= 6) { 
+                if (parts.length >= 6) {
+                    Post p = new Post();
                     p.setId(Integer.parseInt(parts[0]));
                     p.setCaption(parts[1]);
                     p.setDate(LocalDate.parse(parts[2]));
                     p.setImagePath(parts[3]);
-                    p.setLikes(Integer.parseInt(parts[4]));
                     p.setAuthor(parts[5]);
-                    posts.add(p);
-                } else if (parts.length == 5) { 
-                    p.setId(Integer.parseInt(parts[0]));
-                    p.setCaption(parts[1]);
-                    p.setDate(LocalDate.parse(parts[2]));
-                    p.setImagePath(parts[3]);
-                    p.setLikes(Integer.parseInt(parts[4]));
-                    p.setAuthor("Anonym");
+                    
+                    // Lade Liker aus dem 7. Feld (falls vorhanden)
+                    if (parts.length >= 7 && !parts[6].isEmpty()) {
+                        String[] likers = parts[6].split(",");
+                        p.setLikedBy(new HashSet<>(Arrays.asList(likers)));
+                    }
                     posts.add(p);
                 }
             }
@@ -114,8 +100,17 @@ public class PostServiceImplements implements PostService {
     private void saveToCSV() {
         try (PrintWriter pw = new PrintWriter(new FileWriter(CSV_FILE))) {
             for (Post p : posts) {
-                pw.println(p.getId() + ";" + p.getCaption() + ";" + p.getDate() + ";" + p.getImagePath() + ";" + p.getLikes() + ";" + p.getAuthor());
+                String likersCSV = String.join(",", p.getLikedBy());
+                pw.println(p.getId() + ";" + p.getCaption() + ";" + p.getDate() + ";" + 
+                           p.getImagePath() + ";" + p.getLikes() + ";" + p.getAuthor() + ";" + likersCSV);
             }
         } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    @Override
+    public Post updateCaption(int id, String newCaption) {
+        Post p = get(id);
+        if (p != null) { p.setCaption(newCaption); saveToCSV(); }
+        return p;
     }
 }

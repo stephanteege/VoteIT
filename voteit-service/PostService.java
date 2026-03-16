@@ -6,8 +6,7 @@ public interface PostService {
     Post get(int id);
     List<Post> list();
     Post delete(int id);
-    Post addLike(int id);
-    // WICHTIG: author am Ende hinzugefügt
+    Post addLike(int id, String userName);
     Post create(String caption, LocalDate date, InputStream pictureStream, String contentType, String author);
     Post updateCaption(int id, String newCaption);
 }
