@@ -7,8 +7,8 @@ public class PostServiceTest {
         
         PostService service = new PostServiceImplements();
         
-        // Test 1: Erstellen eines Beitrags
-        Post p = service.create("CI-Test Nachricht", LocalDate.now(), null, null, "Test-User");        
+        Post p = service.create("CI-Test Nachricht", LocalDate.now(), null, null, "TestUser");
+        
         if (p != null && "CI-Test Nachricht".equals(p.getCaption())) {
             System.out.println("✅ Test Erstellen: ERFOLGREICH");
         } else {
@@ -16,31 +16,36 @@ public class PostServiceTest {
             System.exit(1);
         }
 
-        // Test 2: Like-Funktion (Zustandsprüfung)
+        // Test 2: Like & Unlike-Funktion (Toggle-Prüfung)
         int likesVorher = p.getLikes();
-        service.addLike(p.getId(), "TestUser");
         
-        service.addLike(p.getId(), "TestUser"); 
-
+        // 1. Klick -> Like (+1)
+        service.addLike(p.getId(), "TestUser");
         if (p.getLikes() == likesVorher + 1) {
-            System.out.println("✅ Test Like-System: ERFOLGREICH (Einfach-Check)");
+            System.out.println("✅ Test Like-System (Hinzufügen): ERFOLGREICH");
         } else {
-            System.out.println("❌ Test Like-System: FEHLGESCHLAGEN");
+            System.out.println("❌ Test Like-System (Hinzufügen): FEHLGESCHLAGEN");
             System.exit(1);
         }
 
-        // Test 3: Lösch-Funktion
+        // 2. Klick -> Unlike (-1)
+        service.addLike(p.getId(), "TestUser"); 
+        if (p.getLikes() == likesVorher) {
+            System.out.println("✅ Test Like-System (Entfernen): ERFOLGREICH");
+        } else {
+            System.out.println("❌ Test Like-System (Entfernen): FEHLGESCHLAGEN");
+            System.exit(1);
+        }
+
         int idZumLoeschen = p.getId();
         service.delete(idZumLoeschen);
-        Post geloeschterPost = service.get(idZumLoeschen);
-        if (geloeschterPost == null) {
+        if (service.get(idZumLoeschen) == null) {
             System.out.println("✅ Test Löschen: ERFOLGREICH");
         } else {
             System.out.println("❌ Test Löschen: FEHLGESCHLAGEN");
             System.exit(1);
         }
 
-        // Test 4: Listen-Funktion (Integrität)
         List<Post> allePosts = service.list();
         if (allePosts != null) {
             System.out.println("✅ Test Daten-Liste: ERFOLGREICH (" + allePosts.size() + " Beiträge gefunden)");

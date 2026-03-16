@@ -26,8 +26,13 @@ public class PostServiceImplements implements PostService {
     public Post addLike(int id, String userName) {
         Post p = get(id);
         if (p != null && userName != null && !userName.isEmpty()) {
-            // Set fügt Namen nur hinzu, wenn er noch nicht existiert
-            p.getLikedBy().add(userName);
+            // TOGGLE-LOGIK: Wenn der Name schon in der Liste ist, entfernen wir ihn (Unlike)
+            if (p.getLikedBy().contains(userName)) {
+                p.getLikedBy().remove(userName);
+            } else {
+                // Wenn er noch nicht in der Liste ist, fügen wir ihn hinzu (Like)
+                p.getLikedBy().add(userName);
+            }
             saveToCSV();
         }
         return p;
