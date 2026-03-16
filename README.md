@@ -41,7 +41,7 @@ Der Service unterstützt die Verarbeitung von Multimedia-Daten via `multipart/fo
 
 ## Lokales Setup und Ausführung
 
-Die Anwendung kann auf drei Arten gestartet werden, je nach gewünschtem Automatisierungsgrad und ist anschöießend erreichbar unter: `http://localhost:8089`
+Die Anwendung kann auf drei Arten gestartet werden, je nach gewünschtem Automatisierungsgrad und ist anschließend erreichbar unter: `http://localhost:8089`
 
 ### Option 1: Start via Docker Compose (Empfohlen)
 Die Nutzung von Docker Compose konfiguriert das Netzwerk-Routing sowie die persistenten Volumes automatisch. Voraussetzung ist eine lokale Installation von Docker.
