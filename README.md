@@ -2,6 +2,107 @@
 
 VoteIT ist eine webbasierte Plattform zum Teilen und Bewerten von multimedialen Beiträgen (Texte, Bilder, Videos). Die Anwendung wurde als Microservice-Architektur entworfen und stellt eine geschlossene Umgebung für autorisierte Nutzer bereit. Die Plattform dient als digitales Begleitsystem für Events und ermöglicht Interaktionen in Echtzeit.
 
+## Diagramme
+
+### Komponentendiagramm
+
+```mermaid
+graph TD
+    Browser["Browser (Client)"]
+
+    subgraph Docker Compose
+        US["User-Service\n:8090\n(UserService.java)"]
+        VS["VoteIT-Service\n:8089\n(Main.java)"]
+    end
+
+    FS[("CSV + Filesystem\n(posts_data.csv, images/)")]
+
+    Browser -- "POST /login\nGET /logout" --> US
+    Browser -- "GET/POST /main\nPOST /like, /update, /delete" --> VS
+    VS -- "Session-Cookie validieren" --> US
+    VS -- "lesen / schreiben" --> FS
+```
+
+### Klassendiagramm (VoteIT-Service)
+
+```mermaid
+classDiagram
+    class Post {
+        -int id
+        -String caption
+        -LocalDate date
+        -String imagePath
+        -String author
+        -Set~String~ likedBy
+        +getId() int
+        +getCaption() String
+        +getDate() LocalDate
+        +getImagePath() String
+        +getAuthor() String
+        +getLikedBy() Set~String~
+        +getLikes() int
+    }
+
+    class PostService {
+        <<interface>>
+        +get(int id) Post
+        +list() List~Post~
+        +delete(int id) Post
+        +addLike(int id, String userName) Post
+        +create(String, LocalDate, InputStream, String, String) Post
+        +updateCaption(int id, String newCaption) Post
+    }
+
+    class PostServiceImplements {
+        -List~Post~ posts
+        -String CSV_FILE
+        +get(int id) Post
+        +list() List~Post~
+        +delete(int id) Post
+        +addLike(int id, String userName) Post
+        +create(String, LocalDate, InputStream, String, String) Post
+        +updateCaption(int id, String newCaption) Post
+        -loadFromCSV() void
+        -saveToCSV() void
+    }
+
+    class Main {
+        +main(String[] args) void
+    }
+
+    PostService <|.. PostServiceImplements : implements
+    PostServiceImplements --> Post : verwaltet
+    Main --> PostService : nutzt
+```
+
+### Sequenzdiagramm — Typischer Ablauf
+
+```mermaid
+sequenceDiagram
+    actor User as Nutzer
+    participant B as Browser
+    participant US as User-Service :8090
+    participant VS as VoteIT-Service :8089
+
+    User->>B: Login (E-Mail + Passwort)
+    B->>US: POST /login
+    US-->>B: 200 OK + Set-Cookie: session=...
+
+    User->>B: Feed aufrufen
+    B->>VS: GET /main (Cookie)
+    VS->>US: Cookie validieren
+    US-->>VS: Nutzername
+    VS-->>B: JSON-Array (alle Posts)
+
+    User->>B: Beitrag erstellen
+    B->>VS: POST /main (multipart: Caption + Bild)
+    VS-->>B: 201 Created (neuer Post als JSON)
+
+    User->>B: Beitrag liken
+    B->>VS: POST /like?id=3 (Cookie)
+    VS-->>B: 200 OK (aktualisierter Post)
+```
+
 ## Architektur und Infrastruktur
 
 Das System basiert auf einer Service-Orientierten Architektur (SOA) und teilt die Zuständigkeiten in zwei unabhängige, containerisierte Microservices auf:
