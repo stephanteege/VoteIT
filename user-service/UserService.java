@@ -47,7 +47,7 @@ public class UserService {
         System.out.println("User-Service läuft auf Port 8090");
     }
 
-    private static String extractParam(String body, String name) {
+    static String extractParam(String body, String name) {
         try {
             for (String pair : body.split("&")) {
                 String[] kv = pair.split("=");

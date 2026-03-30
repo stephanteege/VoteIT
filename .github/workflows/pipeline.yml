@@ -20,7 +20,11 @@ jobs:
 
     - name: User-Service kompilieren
       working-directory: ./user-service
-      run: javac UserService.java
+      run: javac UserService.java UserServiceTest.java
+
+    - name: Automatisierte Unit-Tests User-Service ausführen
+      working-directory: ./user-service
+      run: java UserServiceTest
 
     - name: VoteIT-Service kompilieren
       working-directory: ./voteit-service
