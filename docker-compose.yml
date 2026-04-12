@@ -5,7 +5,6 @@ services:
     ports:
       - "8089:8089"
     volumes:
-      - ./voteit-service/posts_data.csv:/app/posts_data.csv
       - ./voteit-service/images:/app/images
     depends_on:
       - user-service
