@@ -164,10 +164,24 @@ java Main
 
 ## CI/CD Pipeline
 
-Bei jedem Push auf `main` läuft automatisch:
-1. Kompilieren beider Services
-2. Unit-Tests für User-Service und VoteIT-Service
-3. Docker Images bauen und in die GitHub Container Registry pushen
+Die Pipeline läuft über **GitHub Actions** und ist in der Datei `.github/workflows/pipeline.yml` definiert. Sie startet automatisch bei jedem Push auf den `main`-Branch.
+
+Die Pipeline ist in zwei Jobs aufgeteilt:
+
+**Job 1 – `build-and-test`:**
+1. Repository auschecken
+2. Java JDK 17 einrichten (Amazon Corretto)
+3. User-Service kompilieren (`javac UserService.java UserServiceTest.java`)
+4. Unit-Tests User-Service ausführen (`java UserServiceTest`)
+5. VoteIT-Service kompilieren (`javac *.java`)
+6. Unit-Tests VoteIT-Service ausführen (`java PostServiceTest`)
+7. Release-Paket als ZIP-Artefakt in GitHub Actions hochladen
+
+**Job 2 – `deliver`** (läuft nur wenn Job 1 erfolgreich war):
+1. Docker Image für den User-Service bauen und in die GitHub Container Registry (GHCR) pushen
+2. Docker Image für den VoteIT-Service bauen und in die GHCR pushen
+
+Die Images sind danach unter `ghcr.io/<username>/voteit-user-service:latest` bzw. `ghcr.io/<username>/voteit-app:latest` abrufbar. Für den Login bei der Registry wird der automatisch von GitHub bereitgestellte `GITHUB_TOKEN` genutzt – es sind keine manuell hinterlegten Secrets nötig.
 
 ## Unit-Tests
 
@@ -195,3 +209,14 @@ Für beide Services gibt es eigene Testklassen die bei jedem Pipeline-Durchlauf 
 | Stephan | teegst.vi23@stud.gera.dhge.de | password456 |
 | Joanna | gramjo.vi23@stud.gera.dhge.de | password123 |
 | Irene | haerir.vi23@stud.gera.dhge.de | password456 |
+
+> **Hinweis zu Secret Management:** Die Zugangsdaten sind hier zu Testzwecken direkt im Quellcode hinterlegt (`UserService.java`). Das entspricht nicht dem Standard für Produktiv-Umgebungen. Dort würden Passwörter gehasht (z.B. mit bcrypt) in einer Datenbank gespeichert und sensible Konfigurationen wie API-Keys oder DB-Credentials über Umgebungsvariablen oder ein Secret-Management-System (z.B. HashiCorp Vault oder GitHub Secrets) bereitgestellt – nie direkt im Code.
+
+## Hinweis zur Datenpersistenz
+
+Aktuell werden alle Post-Daten in einer einfachen CSV-Datei (`posts_data.csv`) gespeichert, Bilder und Videos direkt im lokalen Dateisystem. Das reicht für dieses Projekt, hat aber offensichtliche Grenzen: keine gleichzeitigen Schreibzugriffe, kein echter Query-Support, und die Daten sind weg wenn der Container neu gebaut wird.
+
+In einer echten Produktiv-Umgebung würde man das ersetzen durch:
+- Eine relationale Datenbank (z.B. PostgreSQL) für die Post-Metadaten
+- Einen externen Objekt-Speicher (z.B. AWS S3 oder MinIO) für Bilder und Videos
+- Die Datenbank würde als eigener Container laufen und per Docker Compose eingebunden
