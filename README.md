@@ -132,7 +132,7 @@ sequenceDiagram
 
 ## Starten
 
-### Mit Docker Compose (einfachste Variante)
+### Mit Docker Compose (Lokale Installation von Docker vorausgesetzt)
 
 ```bash
 docker-compose up --build
