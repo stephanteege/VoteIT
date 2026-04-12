@@ -136,28 +136,30 @@ sequenceDiagram
 
 ## Starten
 
-Das Repository liegt auf GitHub und kann von dort geklont werden:
+### Vorbereitung – Dateien herunterladen
 
+Das Repository ist auf GitHub unter **https://github.com/stephanteege/VoteIT** zu finden. Es gibt drei Wege an die Dateien zu kommen:
+
+**Option A – per Git klonen (empfohlen wenn Git installiert ist):**
 ```bash
-git clone https://github.com/<username>/<repo-name>.git
-cd <repo-name>
+git clone https://github.com/stephanteege/VoteIT.git
+cd VoteIT
 ```
 
-Alternativ kann man das Projekt als ZIP über die GitHub-Weboberfläche herunterladen:
-1. Auf der Repository-Startseite oben rechts auf den grünen Button **"Code"** klicken
+**Option B – ZIP über die GitHub-Weboberfläche:**
+1. Auf der Repository-Seite oben rechts auf den grünen Button **"Code"** klicken
 2. Im Dropdown **"Download ZIP"** auswählen
 3. ZIP entpacken und ins Verzeichnis wechseln
 
-Das von der Pipeline gebaute Release-Paket (bereits kompiliert) gibt es außerdem direkt als Artefakt:
-1. Im Repository auf den Reiter **"Actions"** klicken
+**Option C – fertiges Release-Paket aus der Pipeline (bereits kompiliert, kein JDK nötig):**
+1. Auf GitHub den Reiter **"Actions"** öffnen
 2. Den letzten erfolgreichen Pipeline-Durchlauf auswählen
 3. Ganz unten unter **"Artifacts"** das Paket **"VoteIT-App"** herunterladen und entpacken
 
-Die fertigen Docker Images werden von der CI/CD-Pipeline automatisch in die GitHub Container Registry (GHCR) gepusht und können direkt gezogen werden – ohne das Repository zu klonen:
-
+Die fertigen Docker Images können außerdem direkt aus der GitHub Container Registry gezogen werden – ohne das Repository zu klonen:
 ```bash
-docker pull ghcr.io/<username>/voteit-app:latest
-docker pull ghcr.io/<username>/voteit-user-service:latest
+docker pull ghcr.io/stephanteege/voteit-app:latest
+docker pull ghcr.io/stephanteege/voteit-user-service:latest
 ```
 
 ### Mit Docker Compose (Lokale Installation von Docker vorausgesetzt)
