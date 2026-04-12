@@ -188,6 +188,32 @@ javac *.java
 java Main
 ```
 
+## Aufräumen
+
+### Docker (nach Option A)
+
+Zum Stoppen aller Container:
+```bash
+docker-compose down
+```
+
+Um auch alle Images und den Build-Cache vollständig zu entfernen:
+```bash
+docker system prune -a
+```
+
+Docker fragt vorher nochmal nach Bestätigung mit `y`. Danach ist nichts mehr von dem Projekt auf der Festplatte — außer dem geklonten Ordner selbst, den man manuell löscht:
+```bash
+rm -rf VoteIT
+```
+
+### Manueller Start (nach Option B)
+
+Einfach beide Terminal-Fenster schließen — die Java-Prozesse laufen nicht im Hintergrund. Den Ordner löscht man bei Bedarf manuell:
+```bash
+rm -rf VoteIT
+```
+
 ## CI/CD Pipeline
 
 Die Pipeline läuft über **GitHub Actions** und ist in der Datei `.github/workflows/pipeline.yml` definiert. Sie startet automatisch bei jedem Push auf den `main`-Branch.
