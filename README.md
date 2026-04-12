@@ -240,17 +240,15 @@ Für beide Services gibt es eigene Testklassen die bei jedem Pipeline-Durchlauf 
 
 ## Monitoring
 
-Das Projekt enthält eine einfache Monitoring-Infrastruktur bestehend aus drei Komponenten:
+Das Projekt enthält eine Monitoring-Infrastruktur aus drei Komponenten die automatisch mit `docker-compose up --build` starten:
 
-- **Health-Endpoints** — beide Services melden ihren Status unter `/health`
-- **cAdvisor** — sammelt automatisch Metriken aller laufenden Docker-Container (CPU, RAM, Netzwerk)
-- **Prometheus** — ruft die cAdvisor-Metriken alle 15 Sekunden ab und speichert sie
-
-Das Monitoring startet automatisch mit `docker-compose up --build` — es sind keine zusätzlichen Schritte nötig.
+- **Health-Endpoints** — beide Services haben einen `/health`-Endpunkt der ihren Status zurückgibt. Das ist ein Standard-Pattern in Microservice-Architekturen um schnell prüfen zu können ob ein Service noch lebt, ohne die eigentliche Logik anzufragen.
+- **cAdvisor** (Container Advisor) — ein Tool von Google das automatisch alle laufenden Docker-Container beobachtet und Metriken wie CPU, RAM und Netzwerk sammelt. Es braucht keinen Code-Change — es liest direkt die Docker-Laufzeitumgebung aus und stellt die Daten über eine eigene Web-UI und eine Metrics-API bereit.
+- **Prometheus** — ein Open-Source-Monitoring-System das die Metriken von cAdvisor alle 15 Sekunden abruft ("scraped") und zeitbasiert speichert. Über das eingebaute Web-UI lassen sich die Daten abfragen und als Graph darstellen.
 
 ### Health-Status prüfen
 
-Sobald die Container laufen, kann man den Gesundheitszustand beider Services direkt im Browser oder per Terminal abfragen:
+Sobald die Container laufen, kann man den Status beider Services direkt im Browser oder per Terminal prüfen:
 
 ```bash
 # VoteIT-Service
@@ -269,7 +267,7 @@ Antwortet ein Service nicht oder gibt einen Fehler zurück, ist er nicht erreich
 
 ### Container-Metriken mit cAdvisor
 
-cAdvisor läuft auf Port **8081** und zeigt eine Übersicht aller Container:
+cAdvisor läuft auf Port **8081** und zeigt eine Live-Übersicht aller Container:
 
 1. Im Browser `http://localhost:8081` öffnen
 2. Unter **"Docker Containers"** die einzelnen Container auswählen
@@ -277,19 +275,35 @@ cAdvisor läuft auf Port **8081** und zeigt eine Übersicht aller Container:
 
 ### Metriken mit Prometheus abfragen
 
-Prometheus läuft auf Port **9090** und speichert alle gesammelten Metriken:
+Prometheus läuft auf Port **9090**. So geht man vor:
 
 1. Im Browser `http://localhost:9090` öffnen
-2. Im Suchfeld einen Metrik-Namen eingeben, z.B.:
-   - `container_memory_usage_bytes` — RAM-Verbrauch pro Container
-   - `container_cpu_usage_seconds_total` — CPU-Zeit pro Container
-   - `container_last_seen` — wann ein Container zuletzt aktiv war
-3. Auf **"Execute"** klicken — die Ergebnisse erscheinen als Tabelle oder Graph
+2. Oben auf **"Query"** klicken
+3. Eine der folgenden Abfragen eingeben und auf **"Execute"** klicken
 
-Um gezielt einen Container zu filtern, kann man den Namen in geschweifte Klammern schreiben:
+**RAM-Verbrauch aller Container (in Bytes):**
 ```
-container_memory_usage_bytes{name="voteit-app-1"}
+container_memory_usage_bytes
 ```
+
+**Nur Docker-Container filtern (ohne System-Prozesse):**
+```
+container_memory_usage_bytes{id=~"/docker/.*"}
+```
+
+**Gesamter Docker-RAM-Verbrauch:**
+```
+container_memory_usage_bytes{id="/docker"}
+```
+
+**Prüfen ob Prometheus Daten empfängt (alle aktiven Scrape-Targets):**
+```
+up
+```
+
+Unter dem Reiter **"Graph"** statt "Table" werden die Werte als Zeitverlauf dargestellt.
+
+> **Hinweis:** Auf Mac mit Docker Desktop werden Container über ihre interne ID (`id="/docker/abc123..."`) statt über ihren Namen identifiziert, da der Docker-Socket in einer VM läuft. Auf Linux-Systemen funktioniert die Filterung nach Name (`name="voteit-app-1"`) direkt.
 
 ### Überblick Monitoring-Ports
 
