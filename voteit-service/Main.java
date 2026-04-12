@@ -33,6 +33,14 @@ public class Main {
             exchange.close();
         });
 
+        server.createContext("/health", exchange -> {
+            byte[] resp = "{\"status\":\"UP\",\"service\":\"voteit-service\"}".getBytes("UTF-8");
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, resp.length);
+            exchange.getResponseBody().write(resp);
+            exchange.close();
+        });
+
         server.createContext("/", exchange -> {
             File file = new File("index.html");
             if (file.exists()) {

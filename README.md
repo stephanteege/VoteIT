@@ -238,6 +238,68 @@ Für beide Services gibt es eigene Testklassen die bei jedem Pipeline-Durchlauf 
 
 > **Hinweis zu Secret Management:** Die Zugangsdaten sind hier zu Testzwecken direkt im Quellcode hinterlegt (`UserService.java`). Das entspricht nicht dem Standard für Produktiv-Umgebungen. Dort würden Passwörter gehasht (z.B. mit bcrypt) in einer Datenbank gespeichert und sensible Konfigurationen wie API-Keys oder DB-Credentials über Umgebungsvariablen oder ein Secret-Management-System (z.B. HashiCorp Vault oder GitHub Secrets) bereitgestellt – nie direkt im Code.
 
+## Monitoring
+
+Das Projekt enthält eine einfache Monitoring-Infrastruktur bestehend aus drei Komponenten:
+
+- **Health-Endpoints** — beide Services melden ihren Status unter `/health`
+- **cAdvisor** — sammelt automatisch Metriken aller laufenden Docker-Container (CPU, RAM, Netzwerk)
+- **Prometheus** — ruft die cAdvisor-Metriken alle 15 Sekunden ab und speichert sie
+
+Das Monitoring startet automatisch mit `docker-compose up --build` — es sind keine zusätzlichen Schritte nötig.
+
+### Health-Status prüfen
+
+Sobald die Container laufen, kann man den Gesundheitszustand beider Services direkt im Browser oder per Terminal abfragen:
+
+```bash
+# VoteIT-Service
+curl http://localhost:8089/health
+
+# User-Service
+curl http://localhost:8090/health
+```
+
+Erwartete Antwort:
+```json
+{"status":"UP","service":"voteit-service"}
+```
+
+Antwortet ein Service nicht oder gibt einen Fehler zurück, ist er nicht erreichbar.
+
+### Container-Metriken mit cAdvisor
+
+cAdvisor läuft auf Port **8081** und zeigt eine Übersicht aller Container:
+
+1. Im Browser `http://localhost:8081` öffnen
+2. Unter **"Docker Containers"** die einzelnen Container auswählen
+3. Dort sind CPU-Auslastung, RAM-Verbrauch und Netzwerkaktivität in Echtzeit sichtbar
+
+### Metriken mit Prometheus abfragen
+
+Prometheus läuft auf Port **9090** und speichert alle gesammelten Metriken:
+
+1. Im Browser `http://localhost:9090` öffnen
+2. Im Suchfeld einen Metrik-Namen eingeben, z.B.:
+   - `container_memory_usage_bytes` — RAM-Verbrauch pro Container
+   - `container_cpu_usage_seconds_total` — CPU-Zeit pro Container
+   - `container_last_seen` — wann ein Container zuletzt aktiv war
+3. Auf **"Execute"** klicken — die Ergebnisse erscheinen als Tabelle oder Graph
+
+Um gezielt einen Container zu filtern, kann man den Namen in geschweifte Klammern schreiben:
+```
+container_memory_usage_bytes{name="voteit-app-1"}
+```
+
+### Überblick Monitoring-Ports
+
+| Komponente | URL | Beschreibung |
+|---|---|---|
+| Health VoteIT | http://localhost:8089/health | Status des VoteIT-Service |
+| Health User | http://localhost:8090/health | Status des User-Service |
+| cAdvisor | http://localhost:8081 | Container-Metriken live |
+| Prometheus | http://localhost:9090 | Metriken abfragen & auswerten |
+
 ## Hinweis zur Datenpersistenz
 
 Aktuell werden alle Post-Daten in einer einfachen CSV-Datei (`posts_data.csv`) gespeichert, Bilder und Videos direkt im lokalen Dateisystem. Das reicht für dieses Projekt, hat aber offensichtliche Grenzen: keine gleichzeitigen Schreibzugriffe, kein echter Query-Support, und die Daten sind weg wenn der Container neu gebaut wird.
