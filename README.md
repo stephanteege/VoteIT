@@ -13,6 +13,8 @@ Die zwei Services reden nicht direkt miteinander, der VoteIT-Service liest einfa
 
 ### Komponentendiagramm
 
+Das Diagramm zeigt wie Browser, die beiden Services und der Datei-Speicher zusammenhängen. Der Browser spricht beide Services direkt an, der VoteIT-Service fragt beim User-Service nach ob das Cookie gültig ist bevor er eine Anfrage bearbeitet.
+
 ```mermaid
 graph TD
     Browser["Browser (Client)"]
@@ -85,6 +87,8 @@ classDiagram
 ```
 
 ### Sequenzdiagramm – Login und Post erstellen
+
+Hier sieht man den zeitlichen Ablauf wenn sich ein Nutzer einloggt und danach einen Beitrag erstellt. Gut zu sehen ist dass der VoteIT-Service bei jeder Anfrage erst das Cookie beim User-Service prüft bevor er antwortet.
 
 ```mermaid
 sequenceDiagram
@@ -164,6 +168,24 @@ Bei jedem Push auf `main` läuft automatisch:
 1. Kompilieren beider Services
 2. Unit-Tests für User-Service und VoteIT-Service
 3. Docker Images bauen und in die GitHub Container Registry pushen
+
+## Unit-Tests
+
+Für beide Services gibt es eigene Testklassen die bei jedem Pipeline-Durchlauf automatisch ausgeführt werden. Schlägt ein Test fehl bricht die Pipeline ab und es wird kein neues Image gebaut.
+
+**PostServiceTest.java** (VoteIT-Service) – testet die Kernlogik der Post-Verwaltung:
+- Erstellen eines Posts und prüfen ob Caption korrekt gesetzt wurde
+- Like-Toggle: erster Klick erhöht den Like-Zähler, zweiter Klick senkt ihn wieder
+- Löschen eines Posts und prüfen ob er danach wirklich nicht mehr abrufbar ist
+- Abfragen der gesamten Post-Liste
+
+**UserServiceTest.java** (User-Service) – testet das Parsen der Login-Daten und die Authentifizierung:
+- `extractParam` liest einen einzelnen Parameter korrekt aus dem Request-Body
+- Fehlender Parameter gibt einen leeren String zurück statt einen Fehler zu werfen
+- `%40` im URL-kodierten Body wird korrekt als `@` dekodiert (wichtig für E-Mail-Adressen)
+- Login mit korrekten Zugangsdaten gibt `true` zurück
+- Login mit falschem Passwort oder unbekannter E-Mail gibt `false` zurück
+- Nach erfolgreichem Login wird der richtige Nutzername (z.B. "Joanna") aufgelöst
 
 ## Test-Zugänge
 
