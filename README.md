@@ -13,7 +13,7 @@ Die zwei Services reden nicht direkt miteinander, der VoteIT-Service liest einfa
 
 ### Komponentendiagramm
 
-Das Diagramm zeigt wie Browser, die beiden Services und der Datei-Speicher zusammenhängen. Der Browser spricht beide Services direkt an, der VoteIT-Service fragt beim User-Service nach ob das Cookie gültig ist bevor er eine Anfrage bearbeitet.
+Das Diagramm zeigt wie Browser, die beiden Services und der Datei-Speicher zusammenhängen. Der Browser spricht beide Services direkt an, der VoteIT-Service fragt beim User-Service nach, ob das Cookie gültig ist, bevor er eine Anfrage bearbeitet.
 
 ```mermaid
 graph TD
@@ -109,7 +109,7 @@ sequenceDiagram
 
     User->>B: Beitrag erstellen
     B->>VS: POST /main (multipart: Caption + Bild)
-    VS-->>B: 201 Created (neuer Post als JSON)
+    VS-->>B: 200 OK
 
     User->>B: Beitrag liken
     B->>VS: POST /like?id=3 (Cookie)
