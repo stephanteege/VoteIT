@@ -17,7 +17,7 @@ public class Main {
 
         serveFile(server, "/style.css", "style.css", "text/css");
         serveFile(server, "/index.html", "index.html", "text/html");
-        serveFile(server, "/member_area.html", "member_area.html", "text/html"); // FEHLTE!
+        serveFile(server, "/member_area.html", "member_area.html", "text/html");
         serveFile(server, "/ICON.png", "logo.png", "image/png");
 
         server.createContext("/images/", exchange -> {
@@ -143,13 +143,11 @@ public class Main {
             if (query != null && query.contains("id=")) {
                 int id = Integer.parseInt(query.split("=")[1]);
                 
-                // NEU: Den Usernamen aus dem Cookie holen, genau wie beim Posten!
                 String cookie = exchange.getRequestHeaders().getFirst("Cookie");
                 String currentUser = (cookie != null && cookie.contains("user=")) ? cookie.split("user=")[1].split(";")[0] : "Anonym";
 
                 if ("LIKE".equals(action)) {
-                    // NEU: Jetzt geben wir den Namen an die Like-Methode weiter
-                    service.addLike(id, currentUser); 
+                    service.addLike(id, currentUser);
                 }
                 if ("DELETE".equals(action)) service.delete(id);
                 if ("UPDATE".equals(action)) {

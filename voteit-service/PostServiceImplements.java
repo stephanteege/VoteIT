@@ -26,11 +26,10 @@ public class PostServiceImplements implements PostService {
     public Post addLike(int id, String userName) {
         Post p = get(id);
         if (p != null && userName != null && !userName.isEmpty()) {
-            // TOGGLE-LOGIK: Wenn der Name schon in der Liste ist, entfernen wir ihn (Unlike)
+            // Toggle: schon geliked -> entfernen, sonst hinzufügen
             if (p.getLikedBy().contains(userName)) {
                 p.getLikedBy().remove(userName);
             } else {
-                // Wenn er noch nicht in der Liste ist, fügen wir ihn hinzu (Like)
                 p.getLikedBy().add(userName);
             }
             saveToCSV();
@@ -91,7 +90,6 @@ public class PostServiceImplements implements PostService {
                     p.setImagePath(parts[3]);
                     p.setAuthor(parts[5]);
                     
-                    // Lade Liker aus dem 7. Feld (falls vorhanden)
                     if (parts.length >= 7 && !parts[6].isEmpty()) {
                         String[] likers = parts[6].split(",");
                         p.setLikedBy(new HashSet<>(Arrays.asList(likers)));

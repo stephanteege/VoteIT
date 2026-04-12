@@ -16,10 +16,9 @@ public class PostServiceTest {
             System.exit(1);
         }
 
-        // Test 2: Like & Unlike-Funktion (Toggle-Prüfung)
+        // Like-Toggle testen
         int likesVorher = p.getLikes();
-        
-        // 1. Klick -> Like (+1)
+
         service.addLike(p.getId(), "TestUser");
         if (p.getLikes() == likesVorher + 1) {
             System.out.println("✅ Test Like-System (Hinzufügen): ERFOLGREICH");
@@ -28,8 +27,7 @@ public class PostServiceTest {
             System.exit(1);
         }
 
-        // 2. Klick -> Unlike (-1)
-        service.addLike(p.getId(), "TestUser"); 
+        service.addLike(p.getId(), "TestUser");
         if (p.getLikes() == likesVorher) {
             System.out.println("✅ Test Like-System (Entfernen): ERFOLGREICH");
         } else {

@@ -2,7 +2,6 @@ import java.util.Map;
 
 public class UserServiceTest {
 
-    // Spiegelt die USERS-Map aus UserService wider
     private static final Map<String, String[]> USERS = Map.of(
         "finkca.vi23@stud.gera.dhge.de", new String[]{"password123", "Caro"},
         "teegst.vi23@stud.gera.dhge.de", new String[]{"password456", "Stephan"},
@@ -22,8 +21,8 @@ public class UserServiceTest {
     public static void main(String[] args) {
         System.out.println("=== Starte automatisierte Unit-Tests für User-Service ===");
 
-        // Test 1: extractParam — normaler Parameter
         String body1 = "mail=test%40example.com&password=geheim";
+
         String extracted = UserService.extractParam(body1, "password");
         if ("geheim".equals(extracted)) {
             System.out.println("✅ Test extractParam (Passwort): ERFOLGREICH");
@@ -32,7 +31,6 @@ public class UserServiceTest {
             System.exit(1);
         }
 
-        // Test 2: extractParam — fehlender Parameter gibt leeren String zurück
         String missing = UserService.extractParam(body1, "nichtVorhanden");
         if ("".equals(missing)) {
             System.out.println("✅ Test extractParam (fehlender Parameter): ERFOLGREICH");
@@ -41,7 +39,7 @@ public class UserServiceTest {
             System.exit(1);
         }
 
-        // Test 3: extractParam — %40 wird korrekt als @ dekodiert
+        // %40 muss als @ dekodiert werden damit E-Mail-Adressen funktionieren
         String rawMail = UserService.extractParam(body1, "mail").replace("%40", "@");
         if ("test@example.com".equals(rawMail)) {
             System.out.println("✅ Test extractParam (%40-Dekodierung): ERFOLGREICH");
@@ -50,7 +48,6 @@ public class UserServiceTest {
             System.exit(1);
         }
 
-        // Test 4: Login mit korrekten Zugangsdaten
         if (login("teegst.vi23@stud.gera.dhge.de", "password456")) {
             System.out.println("✅ Test Login (korrekte Daten): ERFOLGREICH");
         } else {
@@ -58,7 +55,6 @@ public class UserServiceTest {
             System.exit(1);
         }
 
-        // Test 5: Login mit falschem Passwort schlägt fehl
         if (!login("teegst.vi23@stud.gera.dhge.de", "falsch")) {
             System.out.println("✅ Test Login (falsches Passwort): ERFOLGREICH");
         } else {
@@ -66,7 +62,6 @@ public class UserServiceTest {
             System.exit(1);
         }
 
-        // Test 6: Login mit unbekannter E-Mail schlägt fehl
         if (!login("unbekannt@example.com", "password123")) {
             System.out.println("✅ Test Login (unbekannte E-Mail): ERFOLGREICH");
         } else {
@@ -74,7 +69,6 @@ public class UserServiceTest {
             System.exit(1);
         }
 
-        // Test 7: Nutzername wird korrekt aufgelöst
         String name = resolveUsername("gramjo.vi23@stud.gera.dhge.de");
         if ("Joanna".equals(name)) {
             System.out.println("✅ Test Nutzernamen-Auflösung: ERFOLGREICH");

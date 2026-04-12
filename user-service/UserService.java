@@ -14,7 +14,6 @@ public class UserService {
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8090), 0);
         
-        // Login-Endpunkt
         server.createContext("/login", exchange -> {
             if ("POST".equals(exchange.getRequestMethod())) {
                 String body = new String(exchange.getRequestBody().readAllBytes());
@@ -23,7 +22,6 @@ public class UserService {
 
                 if (USERS.containsKey(mail) && USERS.get(mail)[0].equals(pass)) {
                     String name = USERS.get(mail)[1];
-                    // Cookie setzen für beide Services
                     exchange.getResponseHeaders().add("Set-Cookie", "user=" + name + "; Path=/; HttpOnly");
                     exchange.getResponseHeaders().add("Location", "http://localhost:8089/member_area.html");
                     exchange.sendResponseHeaders(302, -1);
@@ -35,7 +33,6 @@ public class UserService {
             exchange.close();
         });
 
-        // Logout
         server.createContext("/logout", exchange -> {
             exchange.getResponseHeaders().add("Set-Cookie", "user=; Path=/; Max-Age=0");
             exchange.getResponseHeaders().add("Location", "http://localhost:8089/index.html");
