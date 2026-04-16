@@ -271,9 +271,12 @@ Das Diagramm zeigt wie alle Komponenten – App-Services, Datei-Speicher und Mon
 graph TD
     Browser["Browser (Client)"]
 
-    subgraph Docker Compose
+    subgraph App ["App-Services (Docker Compose)"]
         US["User-Service\n:8090\n(UserService.java)"]
         VS["VoteIT-Service\n:8089\n(Main.java)"]
+    end
+
+    subgraph Mon ["Monitoring (Docker Compose)"]
         CA["cAdvisor\n:8081"]
         PR["Prometheus\n:9090"]
     end
@@ -282,10 +285,10 @@ graph TD
 
     Browser -- "POST /login\nGET /logout" --> US
     Browser -- "GET/POST /main\nPOST /like, /update, /delete\n(Cookie: user=Name)" --> VS
-    Browser -- "Web-UI / PromQL" --> PR
     Browser -- "Web-UI" --> CA
+    Browser -- "Web-UI / PromQL" --> PR
     VS -- "lesen / schreiben" --> FS
-    CA -- "Container-Metriken\nscrapen (alle 15s)" --> PR
+    CA -- "Metriken scrapen\n(alle 15s)" --> PR
 ```
 
 - **Health-Endpoints** — beide Services haben einen `/health`-Endpunkt der ihren Status zurückgibt. Das ist ein Standard-Pattern in Microservice-Architekturen um schnell prüfen zu können ob ein Service noch lebt, ohne die eigentliche Logik anzufragen.
