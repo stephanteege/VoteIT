@@ -67,7 +67,7 @@ classDiagram
 
 ### Sequenzdiagramm – Login und Post erstellen
 
-Hier sieht man den zeitlichen Ablauf wenn sich ein Nutzer einloggt und danach einen Beitrag erstellt. Gut zu sehen ist dass der VoteIT-Service bei jeder Anfrage erst das Cookie beim User-Service prüft bevor er antwortet.
+Hier sieht man den zeitlichen Ablauf wenn sich ein Nutzer einloggt und danach einen Beitrag erstellt. Der User-Service setzt nach erfolgreichem Login ein Cookie, das der Browser bei allen weiteren Anfragen mitschickt. Der VoteIT-Service liest den Benutzernamen direkt aus diesem Cookie – ohne den User-Service nochmal zu kontaktieren.
 
 ```mermaid
 sequenceDiagram
