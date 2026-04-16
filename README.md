@@ -9,11 +9,11 @@ Die App besteht aus zwei Services die getrennt laufen:
 - **User-Service (Port 8090)** – kümmert sich nur ums Login und setzt ein Cookie wenn die Credentials stimmen
 - **VoteIT-Service (Port 8089)** – der eigentliche Hauptservice, macht alles mit den Posts (anzeigen, erstellen, liken, löschen)
 
-Die zwei Services reden nicht direkt miteinander, der VoteIT-Service liest einfach das Cookie das der User-Service gesetzt hat.
+Die zwei Services reden nicht direkt miteinander. Der User-Service setzt beim Login ein Cookie (`user=<Name>`), das der Browser bei jedem Request an den VoteIT-Service mitschickt. Der VoteIT-Service liest den Benutzernamen direkt aus diesem Cookie – ohne den User-Service nochmal zu kontaktieren.
 
 ### Komponentendiagramm
 
-Das Diagramm zeigt wie Browser, die beiden Services und der Datei-Speicher zusammenhängen. Der Browser spricht beide Services direkt an, der VoteIT-Service fragt beim User-Service nach, ob das Cookie gültig ist, bevor er eine Anfrage bearbeitet.
+Das Diagramm zeigt wie Browser, die beiden Services und der Datei-Speicher zusammenhängen. Der Browser spricht beide Services direkt an, die Services kommunizieren nicht untereinander.
 
 ```mermaid
 graph TD
@@ -27,8 +27,7 @@ graph TD
     FS[("CSV + Filesystem\n(posts_data.csv, images/)")]
 
     Browser -- "POST /login\nGET /logout" --> US
-    Browser -- "GET/POST /main\nPOST /like, /update, /delete" --> VS
-    VS -- "Session-Cookie validieren" --> US
+    Browser -- "GET/POST /main\nPOST /like, /update, /delete\n(Cookie: user=Name)" --> VS
     VS -- "lesen / schreiben" --> FS
 ```
 
@@ -99,21 +98,20 @@ sequenceDiagram
 
     User->>B: Login (E-Mail + Passwort)
     B->>US: POST /login
-    US-->>B: 200 OK + Set-Cookie: session=...
+    US-->>B: 302 Redirect + Set-Cookie: user=Stephan
 
     User->>B: Feed aufrufen
-    B->>VS: GET /main (Cookie)
-    VS->>US: Cookie validieren
-    US-->>VS: Nutzername
+    B->>VS: GET /main (Cookie: user=Stephan)
+    Note right of VS: Liest Benutzername direkt<br/>aus dem Cookie
     VS-->>B: JSON-Array (alle Posts)
 
     User->>B: Beitrag erstellen
-    B->>VS: POST /main (multipart: Caption + Bild)
+    B->>VS: POST /main (multipart: Caption + Bild, Cookie: user=Stephan)
     VS-->>B: 200 OK
 
     User->>B: Beitrag liken
-    B->>VS: POST /like?id=3 (Cookie)
-    VS-->>B: 200 OK (aktualisierter Post)
+    B->>VS: POST /like?id=3 (Cookie: user=Stephan)
+    VS-->>B: 200 OK
 ```
 
 ## Technologie
@@ -126,6 +124,8 @@ sequenceDiagram
 
 ## API-Endpunkte
 
+**VoteIT-Service (Port 8089)**
+
 | Endpunkt | Methode | Beschreibung |
 |---|---|---|
 | `/main` | GET | Alle Posts als JSON |
@@ -133,6 +133,15 @@ sequenceDiagram
 | `/like?id=X` | POST | Like togglen (einmal = like, nochmal = unlike) |
 | `/update?id=X` | POST | Beschreibung ändern |
 | `/delete?id=X` | POST | Post löschen |
+| `/health` | GET | Gibt `{"status":"UP","service":"voteit-service"}` zurück |
+
+**User-Service (Port 8090)**
+
+| Endpunkt | Methode | Beschreibung |
+|---|---|---|
+| `/login` | POST | Login mit E-Mail + Passwort, setzt Cookie `user=<Name>` |
+| `/logout` | GET | Cookie löschen, Redirect zur Login-Seite |
+| `/health` | GET | Gibt `{"status":"UP","service":"user-service"}` zurück |
 
 ## Starten
 
@@ -342,7 +351,11 @@ Unter dem Reiter **"Graph"** statt "Table" werden die Werte als Zeitverlauf darg
 
 ## Hinweis zur Datenpersistenz
 
-Aktuell werden alle Post-Daten in einer einfachen CSV-Datei (`posts_data.csv`) gespeichert, Bilder und Videos direkt im lokalen Dateisystem. Das reicht für dieses Projekt, hat aber offensichtliche Grenzen: keine gleichzeitigen Schreibzugriffe, kein echter Query-Support, und die Daten sind weg wenn der Container neu gebaut wird.
+Aktuell werden alle Post-Daten in einer einfachen CSV-Datei (`posts_data.csv`) gespeichert, Bilder und Videos direkt im lokalen Dateisystem. Das reicht für dieses Projekt, hat aber offensichtliche Grenzen: keine gleichzeitigen Schreibzugriffe, kein echter Query-Support.
+
+**Was persistiert und was nicht:**
+- **Bilder und Videos** (`images/`) – bleiben erhalten, da sie per Volume-Mount (`./voteit-service/images:/app/images`) auf den Host gemountet sind
+- **Post-Metadaten** (`posts_data.csv`) – gehen verloren sobald der Container gestoppt wird (`docker-compose down`), da kein Volume-Mount existiert. Die Datei wird beim nächsten Start automatisch neu angelegt (`ensureCSVExists()`). Das ist eine bewusste Entscheidung: für ein Hochschulprojekt im DevOps-Kontext ist Einfachheit wichtiger als vollständige Persistenz.
 
 In einer echten Produktiv-Umgebung würde man das ersetzen durch:
 - Eine relationale Datenbank (z.B. PostgreSQL) für die Post-Metadaten
