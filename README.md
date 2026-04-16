@@ -282,8 +282,8 @@ graph TD
 
     Browser -- "POST /login\nGET /logout" --> US
     Browser -- "GET/POST /main\nPOST /like, /update, /delete\n(Cookie: user=Name)" --> VS
-    Browser -- "Web-UI" --> CA
     Browser -- "Web-UI / PromQL" --> PR
+    Browser -- "Web-UI" --> CA
     VS -- "lesen / schreiben" --> FS
     CA -- "Container-Metriken\nscrapen (alle 15s)" --> PR
 ```
