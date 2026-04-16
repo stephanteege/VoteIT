@@ -96,11 +96,15 @@
                     const deleteBtn = post.Ersteller === currentUser
                         ? `<button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem; background: #e0607a;" onclick="doDelete(${post.Bild_ID})">Löschen</button>`
                         : "";
+                    const editBtn = post.Ersteller === currentUser
+                        ? `<button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem; background: #4a7c59;" onclick="doUpdate(${post.Bild_ID}, '${post.Beschreibung.replace(/'/g, "\\'")}')">Bearbeiten</button>`
+                        : "";
                     div.innerHTML = `
                         <h4>${post.Beschreibung}</h4>
                         ${media}
                         <div class="post-actions" style="margin-top: 15px;">
                             <button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem;" onclick="doLike(${post.Bild_ID})">♡ ${post.Likes || 0}</button>
+                            ${editBtn}
                             ${deleteBtn}
                             <span style="float: right; font-style: italic; color: #7a9fd4; margin-top: 5px;">von ${post.Ersteller || 'Anonym'}</span>
                         </div>
@@ -125,6 +129,12 @@
 
         function doLike(id) { fetch(`/like?id=${id}`, { method: 'POST' }).then(loadTimeline); }
         function doDelete(id) { if(confirm("Löschen?")) fetch(`/delete?id=${id}`, { method: 'POST' }).then(loadTimeline); }
+        function doUpdate(id, currentCaption) {
+            const newCaption = prompt("Beschreibung bearbeiten:", currentCaption);
+            if (newCaption !== null && newCaption.trim() !== "") {
+                fetch(`/update?id=${id}`, { method: 'POST', body: newCaption.trim() }).then(loadTimeline);
+            }
+        }
 
         window.onload = function() {
             fetch('/whoami').then(r => r.json()).then(data => {
