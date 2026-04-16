@@ -1,6 +1,6 @@
 # VoteIT
 
-VoteIT ist eine einfache Web-App zum Teilen von Fotos und Videos innerhalb einer Gruppe. Nutzer können Beiträge erstellen, liken und wieder löschen. Das Projekt wurde im Rahmen des DevOps-Kurses als Microservice-Anwendung umgesetzt.
+VoteIT ist eine einfache Web-App zum Teilen von Fotos und Videos innerhalb einer Gruppe. Nutzer können Beiträge erstellen, liken, bearbeiten und wieder löschen. Das Projekt wurde im Rahmen des DevOps-Kurses als Microservice-Anwendung umgesetzt.
 
 ## Wie das Ganze aufgebaut ist
 
@@ -10,26 +10,6 @@ Die App besteht aus zwei Services die getrennt laufen:
 - **VoteIT-Service (Port 8089)** – der eigentliche Hauptservice, macht alles mit den Posts (anzeigen, erstellen, liken, löschen)
 
 Die zwei Services reden nicht direkt miteinander. Der User-Service setzt beim Login ein Cookie (`user=<Name>`), das der Browser bei jedem Request an den VoteIT-Service mitschickt. Der VoteIT-Service liest den Benutzernamen direkt aus diesem Cookie – ohne den User-Service nochmal zu kontaktieren.
-
-### Komponentendiagramm
-
-Das Diagramm zeigt wie Browser, die beiden Services und der Datei-Speicher zusammenhängen. Der Browser spricht beide Services direkt an, die Services kommunizieren nicht untereinander.
-
-```mermaid
-graph TD
-    Browser["Browser (Client)"]
-
-    subgraph Docker Compose
-        US["User-Service\n:8090\n(UserService.java)"]
-        VS["VoteIT-Service\n:8089\n(Main.java)"]
-    end
-
-    FS[("CSV + Filesystem\n(posts_data.csv, images/)")]
-
-    Browser -- "POST /login\nGET /logout" --> US
-    Browser -- "GET/POST /main\nPOST /like, /update, /delete\n(Cookie: user=Name)" --> VS
-    VS -- "lesen / schreiben" --> FS
-```
 
 ### Klassendiagramm (VoteIT-Service)
 
@@ -147,9 +127,9 @@ sequenceDiagram
 
 ### Vorbereitung – Dateien herunterladen
 
-Das Repository ist auf GitHub unter **https://github.com/stephanteege/VoteIT** zu finden. Es gibt drei Wege an die Dateien zu kommen:
+Das Repository ist auf GitHub unter **https://github.com/stephanteege/VoteIT** zu finden.
 
-**Option A – per Git klonen (empfohlen wenn Git installiert ist):**
+**Option A – per Git klonen (Normalfall, empfohlen):**
 ```bash
 git clone https://github.com/stephanteege/VoteIT.git
 cd VoteIT
@@ -165,19 +145,27 @@ cd VoteIT
 2. Den letzten erfolgreichen Pipeline-Durchlauf auswählen
 3. Ganz unten unter **"Artifacts"** das Paket **"VoteIT-App"** herunterladen und entpacken
 
-Die fertigen Docker Images können außerdem direkt aus der GitHub Container Registry gezogen werden – ohne das Repository zu klonen:
-```bash
-docker pull ghcr.io/stephanteege/voteit-app:latest
-docker pull ghcr.io/stephanteege/voteit-user-service:latest
-```
-
 ### Mit Docker Compose (Lokale Installation von Docker vorausgesetzt)
 
+Nach Option A oder B:
 ```bash
 docker-compose up --build
 ```
 
 Danach läuft die App unter `http://localhost:8089`.
+
+**Alternative – Docker Images direkt aus der Registry laden (kein Quellcode nötig):**
+
+Die fertigen Images werden von der CI/CD-Pipeline automatisch in die GitHub Container Registry gepusht. Das ist sinnvoll wenn man die App nur starten will ohne den Code selbst zu bauen – zum Beispiel auf einem Server. Dafür zuerst die Images pullen:
+```bash
+docker pull ghcr.io/stephanteege/voteit-app:latest
+docker pull ghcr.io/stephanteege/voteit-user-service:latest
+```
+Anschließend trotzdem die `docker-compose.yml` aus dem Repository benötigen, da sie die Konfiguration (Ports, Volumes, Monitoring) enthält. Dann starten mit:
+```bash
+docker-compose up
+```
+Der Unterschied zu `--build`: Docker baut die Images nicht neu, sondern nutzt die bereits gepullten.
 
 ### Manuell mit Java
 
@@ -275,7 +263,28 @@ Für beide Services gibt es eigene Testklassen die bei jedem Pipeline-Durchlauf 
 
 ## Monitoring
 
-Das Projekt enthält eine Monitoring-Infrastruktur aus drei Komponenten die automatisch mit `docker-compose up --build` starten:
+Das Projekt enthält eine Monitoring-Infrastruktur aus drei Komponenten die automatisch mit `docker-compose up --build` starten.
+
+Das Diagramm zeigt wie alle Komponenten – App-Services, Datei-Speicher und Monitoring – zusammenhängen:
+
+```mermaid
+graph TD
+    Browser["Browser (Client)"]
+
+    subgraph Docker Compose
+        US["User-Service\n:8090\n(UserService.java)"]
+        VS["VoteIT-Service\n:8089\n(Main.java)"]
+        CA["cAdvisor\n:8081"]
+        PR["Prometheus\n:9090"]
+    end
+
+    FS[("CSV + Filesystem\n(posts_data.csv, images/)")]
+
+    Browser -- "POST /login\nGET /logout" --> US
+    Browser -- "GET/POST /main\nPOST /like, /update, /delete\n(Cookie: user=Name)" --> VS
+    VS -- "lesen / schreiben" --> FS
+    CA -- "Container-Metriken\nscrapen (alle 15s)" --> PR
+```
 
 - **Health-Endpoints** — beide Services haben einen `/health`-Endpunkt der ihren Status zurückgibt. Das ist ein Standard-Pattern in Microservice-Architekturen um schnell prüfen zu können ob ein Service noch lebt, ohne die eigentliche Logik anzufragen.
 - **cAdvisor** (Container Advisor) — ein Tool von Google das automatisch alle laufenden Docker-Container beobachtet und Metriken wie CPU, RAM und Netzwerk sammelt. Es braucht keinen Code-Change — es liest direkt die Docker-Laufzeitumgebung aus und stellt die Daten über eine eigene Web-UI und eine Metrics-API bereit.
