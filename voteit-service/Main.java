@@ -33,6 +33,16 @@ public class Main {
             exchange.close();
         });
 
+        server.createContext("/whoami", exchange -> {
+            String cookie = exchange.getRequestHeaders().getFirst("Cookie");
+            String user = (cookie != null && cookie.contains("user=")) ? cookie.split("user=")[1].split(";")[0] : "Anonym";
+            byte[] resp = ("{\"user\":\"" + user + "\"}").getBytes("UTF-8");
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, resp.length);
+            exchange.getResponseBody().write(resp);
+            exchange.close();
+        });
+
         server.createContext("/health", exchange -> {
             byte[] resp = "{\"status\":\"UP\",\"service\":\"voteit-service\"}".getBytes("UTF-8");
             exchange.getResponseHeaders().add("Content-Type", "application/json");
@@ -149,7 +159,12 @@ public class Main {
                 if ("LIKE".equals(action)) {
                     service.addLike(id, currentUser);
                 }
-                if ("DELETE".equals(action)) service.delete(id);
+                if ("DELETE".equals(action)) {
+                    Post p = service.get(id);
+                    if (p != null && p.getAuthor().equals(currentUser)) {
+                        service.delete(id);
+                    }
+                }
                 if ("UPDATE".equals(action)) {
                     BufferedReader r = new BufferedReader(new InputStreamReader(exchange.getRequestBody(), "UTF-8"));
                     String newCap = r.readLine();

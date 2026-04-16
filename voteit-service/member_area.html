@@ -70,6 +70,8 @@
     </div>
 
     <script>
+        let currentUser = "";
+
         function openModal(m) {
             document.getElementById("modal").classList.add("open");
             document.getElementById("fileArea").style.display = m === 'TEXT' ? 'none' : 'block';
@@ -82,7 +84,7 @@
                 const tl = document.getElementById("timeline");
                 tl.innerHTML = "";
                 if (!data.length) { tl.innerHTML = '<div class="timeline-empty">Noch keine Beiträge – sei der Erste! 🥂</div>'; return; }
-                
+
                 data.reverse().forEach(post => {
                     const div = document.createElement("div");
                     div.className = "post-card";
@@ -91,12 +93,15 @@
                         if (post.BildPfad.endsWith(".mp4")) media = `<video class="post-media" src="${post.BildPfad}" controls></video>`;
                         else media = `<img class="post-media" src="${post.BildPfad}">`;
                     }
+                    const deleteBtn = post.Ersteller === currentUser
+                        ? `<button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem; background: #e0607a;" onclick="doDelete(${post.Bild_ID})">Löschen</button>`
+                        : "";
                     div.innerHTML = `
                         <h4>${post.Beschreibung}</h4>
                         ${media}
                         <div class="post-actions" style="margin-top: 15px;">
                             <button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem;" onclick="doLike(${post.Bild_ID})">♡ ${post.Likes || 0}</button>
-                            <button class="modal-submit" style="width: auto; padding: 5px 10px; font-size: 0.9rem; background: #e0607a;" onclick="doDelete(${post.Bild_ID})">Löschen</button>
+                            ${deleteBtn}
                             <span style="float: right; font-style: italic; color: #7a9fd4; margin-top: 5px;">von ${post.Ersteller || 'Anonym'}</span>
                         </div>
                     `;
@@ -109,7 +114,7 @@
             const formData = new FormData();
             formData.append("caption", document.getElementById("caption").value);
             if (document.getElementById("mediaFile").files[0]) formData.append("file", document.getElementById("mediaFile").files[0]);
-            
+
             fetch('/main', { method: 'POST', body: formData }).then(() => {
                 document.getElementById("caption").value = "";
                 document.getElementById("mediaFile").value = "";
@@ -121,7 +126,12 @@
         function doLike(id) { fetch(`/like?id=${id}`, { method: 'POST' }).then(loadTimeline); }
         function doDelete(id) { if(confirm("Löschen?")) fetch(`/delete?id=${id}`, { method: 'POST' }).then(loadTimeline); }
 
-        window.onload = loadTimeline;
+        window.onload = function() {
+            fetch('/whoami').then(r => r.json()).then(data => {
+                currentUser = data.user;
+                loadTimeline();
+            });
+        };
     </script>
 </body>
 </html>
